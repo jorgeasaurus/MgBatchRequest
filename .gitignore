@@ -1,0 +1,6 @@
+*.csv
+BlogPost-InvokeMgBatchRequest.txt
+code.code-workspace
+Invoke-mgBatchRequestBAK.ps1
+Invoke-mgBatchRequest001.ps1
+Invoke-mgBatchRequest002.ps1
