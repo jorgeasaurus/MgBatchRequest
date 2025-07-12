@@ -1,6 +1,8 @@
 # 🚀 Microsoft Graph Batch Request Optimizer
 
-> **Supercharge your Microsoft Graph API data retrieval with PowerShell batch requests!**
+<p align="center">
+    <img src="assets/graph-batch-optimizer.png" alt="Microsoft Graph Batch Request Optimizer Diagram" />
+</p>
 
 [![PowerShell](https://img.shields.io/badge/PowerShell-6%2B-blue?logo=powershell)](https://github.com/PowerShell/PowerShell)
 [![Microsoft Graph](https://img.shields.io/badge/Microsoft%20Graph-API-orange?logo=microsoft)](https://docs.microsoft.com/en-us/graph/)
