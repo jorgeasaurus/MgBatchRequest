@@ -5,3 +5,5 @@ Invoke-mgBatchRequestBAK.ps1
 Invoke-mgBatchRequest001.ps1
 Invoke-mgBatchRequest002.ps1
 .claude
+BlogPost-InvokeMgBatchRequest.md
+Invoke-mgBatchRequestOriginal.ps1

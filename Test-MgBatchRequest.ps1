@@ -191,19 +191,19 @@ function Test-WithMemoryProfiler {
         } catch {
             Write-Host " ✗" -ForegroundColor Red
             return [PSCustomObject]@{
-                TestName = $TestName
-                Method = $Method
-                Category = $Category
-                Success = $false
-                Error = $_.Exception.Message
-                AverageTimeMs = $null
-                ObjectCount = 0
+                TestName         = $TestName
+                Method           = $Method
+                Category         = $Category
+                Success          = $false
+                Error            = $_.Exception.Message
+                AverageTimeMs    = $null
+                ObjectCount      = 0
                 ThroughputPerSec = 0
-                MemoryUsedMB = 0
-                PageSize = $ExpectedPageSize
-                Iterations = $IterationCount
-                HTTP400Errors = 0
-                Warnings = @()
+                MemoryUsedMB     = 0
+                PageSize         = $ExpectedPageSize
+                Iterations       = $IterationCount
+                HTTP400Errors    = 0
+                Warnings         = @()
             }
         }
     }
@@ -218,28 +218,28 @@ function Test-WithMemoryProfiler {
         [math]::Round(($totalObjects / $avgTime) * 1000, 2) 
     } else { 0 }
     
-    # Display result with error indicators
+    # Display result with error indicators and object count
     if ($http400Count -gt 0) {
-        Write-Host " ⚠ $([math]::Round($avgTime, 0))ms ($http400Count HTTP 400 errors)" -ForegroundColor Yellow
+        Write-Host " ⚠ $([math]::Round($avgTime, 0))ms ($totalObjects objects, $http400Count HTTP 400 errors)" -ForegroundColor Yellow
     } else {
-        Write-Host " ✓ $([math]::Round($avgTime, 0))ms" -ForegroundColor Green
+        Write-Host " ✓ $([math]::Round($avgTime, 0))ms ($totalObjects objects)" -ForegroundColor Green
     }
     
     return [PSCustomObject]@{
-        TestName = $TestName
-        Method = $Method
-        Category = $Category
-        Success = $true
-        AverageTimeMs = [math]::Round($avgTime, 2)
-        MinTimeMs = $minTime
-        MaxTimeMs = $maxTime
-        ObjectCount = $totalObjects
+        TestName         = $TestName
+        Method           = $Method
+        Category         = $Category
+        Success          = $true
+        AverageTimeMs    = [math]::Round($avgTime, 2)
+        MinTimeMs        = $minTime
+        MaxTimeMs        = $maxTime
+        ObjectCount      = $totalObjects
         ThroughputPerSec = $throughput
-        MemoryUsedMB = [math]::Round($avgMemory, 2)
-        PageSize = $ExpectedPageSize
-        Iterations = $IterationCount
-        HTTP400Errors = $http400Count
-        Warnings = $capturedWarnings
+        MemoryUsedMB     = [math]::Round($avgMemory, 2)
+        PageSize         = $ExpectedPageSize
+        Iterations       = $IterationCount
+        HTTP400Errors    = $http400Count
+        Warnings         = $capturedWarnings
     }
 }
 
@@ -270,16 +270,15 @@ function Test-EndpointOptimization {
     $endpointResults = @()
     $pageSize = if ($Config.PageSize -eq -1) { 999 } else { $Config.PageSize }
     
-    # Test baseline if not skipped
-    if ($IncludeBaseline) {
-        $baselineScript = if ($Config.PageSize -eq -1) {
-            [scriptblock]::Create("$($Config.Cmdlet) -All")
-        } else {
-            [scriptblock]::Create("$($Config.Cmdlet) -Top $($Config.PageSize)")
-        }
+    # Test baseline if not skipped and cmdlet is known
+    if ($IncludeBaseline -and $Config.Cmdlet -ne "Unknown") {
+        # Always use -All for standard cmdlets to get complete comparison
+        $baselineScript = [scriptblock]::Create("$($Config.Cmdlet) -All")
         
         $result = Test-WithMemoryProfiler -TestName $Config.Name -TestScript $baselineScript -Method "Standard Cmdlet" -Category $Config.Category -ExpectedPageSize $pageSize -IterationCount $IterationCount
         $endpointResults += $result
+    } elseif ($IncludeBaseline -and $Config.Cmdlet -eq "Unknown") {
+        Write-Host "  Skipping Standard Cmdlet (no known cmdlet for endpoint)" -ForegroundColor Yellow
     }
     
     # Test sequential batch
@@ -323,17 +322,17 @@ function Test-EndpointOptimization {
 
 # Define comprehensive endpoint configurations
 $endpointConfigs = @{
-    "Quick" = @(
+    "Quick"     = @(
         @{ Name = "Users (Small)"; Endpoint = "users"; Cmdlet = "Get-MgBetaUser"; PageSize = 50; Category = "Identity" },
         @{ Name = "Groups (Small)"; Endpoint = "groups"; Cmdlet = "Get-MgBetaGroup"; PageSize = 50; Category = "Identity" }
     )
-    "Standard" = @(
-        @{ Name = "Users"; Endpoint = "users"; Cmdlet = "Get-MgBetaUser"; PageSize = 200; Category = "Identity" },
-        @{ Name = "Groups"; Endpoint = "groups"; Cmdlet = "Get-MgBetaGroup"; PageSize = 100; Category = "Identity" },
-        @{ Name = "Applications"; Endpoint = "applications"; Cmdlet = "Get-MgBetaApplication"; PageSize = 100; Category = "Identity" },
-        @{ Name = "Mobile Apps"; Endpoint = "deviceAppManagement/mobileApps"; Cmdlet = "Get-MgBetaDeviceAppManagementMobileApp"; PageSize = 100; Category = "Device Management" },
-        @{ Name = "Devices"; Endpoint = "devices"; Cmdlet = "Get-MgBetaDevice"; PageSize = 100; Category = "Identity" },
-        @{ Name = "Managed Devices"; Endpoint = "deviceManagement/managedDevices"; Cmdlet = "Get-MgBetaDeviceManagementManagedDevice"; PageSize = 100; Category = "Device Management" }
+    "Standard"  = @(
+        @{ Name = "Users"; Endpoint = "users"; Cmdlet = "Get-MgBetaUser"; PageSize = -1; Category = "Identity" },
+        @{ Name = "Groups"; Endpoint = "groups"; Cmdlet = "Get-MgBetaGroup"; PageSize = -1; Category = "Identity" },
+        @{ Name = "Applications"; Endpoint = "applications"; Cmdlet = "Get-MgBetaApplication"; PageSize = -1; Category = "Identity" },
+        @{ Name = "Mobile Apps"; Endpoint = "deviceAppManagement/mobileApps"; Cmdlet = "Get-MgBetaDeviceAppManagementMobileApp"; PageSize = -1; Category = "Device Management" },
+        @{ Name = "Devices"; Endpoint = "devices"; Cmdlet = "Get-MgBetaDevice"; PageSize = -1; Category = "Identity" },
+        @{ Name = "Managed Devices"; Endpoint = "deviceManagement/managedDevices"; Cmdlet = "Get-MgBetaDeviceManagementManagedDevice"; PageSize = -1; Category = "Device Management" }
     )
     "Extensive" = @(
         @{ Name = "All Users"; Endpoint = "users"; Cmdlet = "Get-MgBetaUser"; PageSize = -1; Category = "Identity" },
@@ -343,7 +342,7 @@ $endpointConfigs = @{
         @{ Name = "Directory Audits"; Endpoint = "auditLogs/directoryAudits"; Cmdlet = "Get-MgBetaAuditLogDirectoryAudit"; PageSize = -1; Category = "Audit Logs" },
         @{ Name = "Sign-in Logs"; Endpoint = "auditLogs/signIns"; Cmdlet = "Get-MgBetaAuditLogSignIn"; PageSize = -1; Category = "Audit Logs" }
     )
-    "Optimize" = @(
+    "Optimize"  = @(
         # Will be populated based on Endpoints parameter
     )
 }
@@ -366,7 +365,19 @@ $endpointsToTest = switch ($TestMode) {
             exit 1
         }
         $Endpoints | ForEach-Object {
-            @{ Name = $_; Endpoint = $_; Cmdlet = "Unknown"; PageSize = 100; Category = "Custom" }
+            # Map endpoint to appropriate cmdlet
+            $cmdlet = switch ($_) {
+                "users" { "Get-MgBetaUser" }
+                "groups" { "Get-MgBetaGroup" }
+                "applications" { "Get-MgBetaApplication" }
+                "devices" { "Get-MgBetaDevice" }
+                "deviceManagement/managedDevices" { "Get-MgBetaDeviceManagementManagedDevice" }
+                "deviceAppManagement/mobileApps" { "Get-MgBetaDeviceAppManagementMobileApp" }
+                "auditLogs/directoryAudits" { "Get-MgBetaAuditLogDirectoryAudit" }
+                "auditLogs/signIns" { "Get-MgBetaAuditLogSignIn" }
+                default { "Unknown" }
+            }
+            @{ Name = $_; Endpoint = $_; Cmdlet = $cmdlet; PageSize = -1; Category = "Custom" }
         }
     }
     "Optimize" {
@@ -471,14 +482,14 @@ foreach ($categoryGroup in $categories) {
 Write-Host "`n=== Production-Ready Commands ===" -ForegroundColor Yellow
 
 $optimalConfigurations = $successfulResults | Where-Object { $_.Method -like "*Parallel*" } | 
-    Group-Object TestName | ForEach-Object {
+Group-Object TestName | ForEach-Object {
     $bestConfig = $_.Group | Sort-Object AverageTimeMs | Select-Object -First 1
     if ($bestConfig.Method -match 'Parallel \((\d+) jobs\)') {
         [PSCustomObject]@{
-            Endpoint = $bestConfig.TestName
+            Endpoint    = $bestConfig.TestName
             OptimalJobs = $matches[1]
             Performance = "$([math]::Round($bestConfig.AverageTimeMs, 0))ms"
-            Throughput = "$($bestConfig.ThroughputPerSec) obj/sec"
+            Throughput  = "$($bestConfig.ThroughputPerSec) obj/sec"
         }
     }
 }
@@ -487,15 +498,15 @@ if ($optimalConfigurations) {
     Write-Host "Based on your test results, here are the optimal configurations:" -ForegroundColor White
     $optimalConfigurations | ForEach-Object {
         $endpointPath = switch -Wildcard ($_.Endpoint) {
+            "*Managed Devices*" { "deviceManagement/managedDevices" }
+            "*Mobile Apps*" { "deviceAppManagement/mobileApps" }
+            "*Directory Audits*" { "auditLogs/directoryAudits" }
+            "*Sign-in*" { "auditLogs/signIns" }
             "*Users*" { "users" }
             "*Groups*" { "groups" }
             "*Applications*" { "applications" }
-            "*Mobile Apps*" { "deviceAppManagement/mobileApps" }
             "*Devices*" { "devices" }
-            "*Managed Devices*" { "deviceManagement/managedDevices" }
-            "*Directory Audits*" { "auditLogs/directoryAudits" }
-            "*Sign-in*" { "auditLogs/signIns" }
-            default { "endpoint-path" }
+            default { $_.Endpoint }
         }
         
         Write-Host "`n# $($_.Endpoint) - $($_.Performance) ($($_.Throughput)):" -ForegroundColor Green

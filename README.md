@@ -28,16 +28,16 @@ Transform your Microsoft Graph API experience from **hours of waiting** ⏳ into
 
 ### 📈 Performance Improvements
 
-Based on actual test results from real Microsoft Graph tenant:
+Based on actual test results from a real tenant with production data:
 
-| Endpoint            | Standard Cmdlet | Best Batch Method | Time Improvement  | Speed Boost   |
-| ------------------- | --------------- | ----------------- | ----------------- | ------------- |
-| **Users**           | 204ms           | 88ms (8 jobs)     | **⚡ 57% faster** | 🚀 2.3x speed |
-| **Groups**          | 104ms           | 96ms (12 jobs)    | **⚡ 8% faster**  | 🚀 1.1x speed |
-| **Applications**    | 203ms           | 102ms (10 jobs)   | **⚡ 50% faster** | 🚀 2.0x speed |
-| **Mobile Apps**     | 1,745ms         | 216ms (Memory)    | **⚡ 88% faster** | 🚀 8.1x speed |
-| **Devices**         | 91ms            | 78ms (12 jobs)    | **⚡ 14% faster** | 🚀 1.2x speed |
-| **Managed Devices** | 577ms           | 147ms (10 jobs)   | **⚡ 75% faster** | 🚀 3.9x speed |
+| Endpoint            | Objects   | Standard Cmdlet | Best Batch Method      | Time Saved    | Speed Boost   |
+| ------------------- | --------- | --------------- | ---------------------- | ------------- | ------------- |
+| **Users**           | 33,284    | 204,519ms       | 122,360ms (Sequential) | **⚡ 40.2%**  | 🚀 1.7x speed |
+| **Groups**          | 18,585    | 43,696ms        | 18,119ms (Memory)      | **⚡ 58.5%**  | 🚀 2.4x speed |
+| **Applications**    | 347       | 1,367ms         | 757ms (5 jobs)         | **⚡ 44.6%**  | 🚀 1.8x speed |
+| **Mobile Apps**     | 454       | 894ms           | 589ms (12 jobs)        | **⚡ 34.1%**  | 🚀 1.5x speed |
+| **Devices**         | 88,677    | 247,174ms       | 93,581ms (Memory)      | **⚡ 62.1%**  | 🚀 2.6x speed |
+| **Managed Devices** | 9,866     | 14,192ms        | 12,869ms (Sequential)  | **⚡ 9.3%**   | 🚀 1.1x speed |
 
 ## ✨ Key Features
 
@@ -46,6 +46,7 @@ Based on actual test results from real Microsoft Graph tenant:
 - **🔄 Intelligent Pagination:** Automatically handles Graph API pagination with skip tokens
 - **📦 Batch Processing:** Bundles up to 20 requests per HTTP call (10-20x faster)
 - **⚡ Parallel Execution:** Runs multiple batches simultaneously (additional 3-5x boost)
+- **🎯 Smart Request Handling:** Automatically switches to direct requests for single remaining pages
 - **🧠 Memory Management:** Built-in memory monitoring and warnings
 - **🌍 Multi-Cloud Support:** Works with Global, USGov, China, and Germany clouds
 
@@ -216,14 +217,16 @@ The main script is now modularly organized with these helper functions:
 
 ### 🏆 **Real-World Results**
 
-Based on actual testing results from production tenant (Test Date: 2025-01-12):
+Based on comprehensive testing in a real tenant (Test Date: 2025-01-12):
 
-| Endpoint            | Object Count | Standard Cmdlet | Best Batch Method | Time Saved | Throughput Gain      |
-| ------------------- | ------------ | --------------- | ----------------- | ---------- | -------------------- |
-| **Users**           | 2 objects    | 204ms           | 88ms (8 jobs)     | **57%** ⚡ | 9.8 → 22.7 obj/sec   |
-| **Applications**    | 9 objects    | 203ms           | 102ms (10 jobs)   | **50%** 🚀 | 44.3 → 88.2 obj/sec  |
-| **Mobile Apps**     | 22 objects   | 1,745ms         | 216ms (Memory)    | **88%** 🎯 | 12.6 → 101.9 obj/sec |
-| **Managed Devices** | 6 objects    | 577ms           | 147ms (10 jobs)   | **75%** 🔥 | 10.4 → 40.8 obj/sec  |
+| Endpoint            | Object Count | Standard Cmdlet | Best Batch Method      | Time Saved | Throughput         |
+| ------------------- | ------------ | --------------- | ---------------------- | ---------- | ------------------ |
+| **Users**           | 33,284       | 3m 24s          | 2m 2s (Sequential)     | **40%** ⚡ | 162 → 272 obj/sec  |
+| **Groups**          | 18,585       | 43.7s           | 18.1s (Memory)         | **59%** 🚀 | 425 → 976 obj/sec  |
+| **Devices**         | 88,677       | 4m 7s           | 1m 34s (Memory)        | **62%** 🎯 | 359 → 948 obj/sec  |
+| **Applications**    | 347          | 1.4s            | 0.8s (Parallel-5)      | **45%** 🔥 | 254 → 458 obj/sec  |
+
+**Key Finding**: For large datasets (33K+ objects), sequential batching often outperforms parallel processing due to reduced overhead.
 
 ### 💾 **Memory Efficiency**
 
@@ -260,6 +263,7 @@ $devices = Invoke-mgBatchRequest -Endpoint "deviceManagement/managedDevices" -Us
 | **Permission Denied**       | Verify required scopes are granted                           |
 | **HTTP 429 (Throttling)**   | Reduce `MaxConcurrentJobs` parameter                         |
 | **Memory Warnings**         | Lower `MemoryThreshold` or process in smaller batches        |
+| **Batch Request Errors**    | Fixed: Single requests now use direct API calls instead of invalid single-item batches |
 | **Unexpected Behavior**     | 🚧 **Report as issue** - this tool is in active development  |
 | **Performance Differences** | Results may vary by tenant, endpoint, and network conditions |
 
@@ -291,6 +295,47 @@ cd MgBatchRequest
 .\Test-MgBatchRequest.ps1 -TestMode Quick
 ```
 
+### 📊 **Sample Test Output**
+
+Here's real output from testing in a production tenant:
+
+```
+=== Microsoft Graph Batch Request Performance Testing ===
+Enhanced with Advanced Memory Profiling, Error Detection & Optimization
+Test Mode: Standard | Max Jobs: 15 | Iterations: 1
+
+--- Optimizing: Users ---
+  Testing: Standard Cmdlet ✓ 204519ms (33284 objects)
+  Testing: Batch Sequential ✓ 122360ms (33284 objects)
+  Testing: Batch Parallel (5 jobs) ✓ 141907ms (33284 objects)
+  Testing: Batch Parallel (8 jobs) ✓ 131957ms (33284 objects)
+  Testing: Batch Parallel (10 jobs) ✓ 122451ms (33284 objects)
+  Testing: Batch Memory Managed ✓ 128749ms (33284 objects)
+
+--- Optimizing: Devices ---
+  Testing: Standard Cmdlet ✓ 247174ms (88677 objects)
+  Testing: Batch Sequential ⚠ 106596ms (88677 objects, Memory warning)
+  Testing: Batch Parallel (8 jobs) ✓ 97094ms (88677 objects)
+  Testing: Batch Memory Managed ✓ 93581ms (88677 objects)
+
+=== Advanced Performance Analysis ===
+
+Identity Endpoints:
+  • Users: 40.2% improvement (Batch Sequential)
+    Throughput: 272.02 obj/sec vs 162.74 obj/sec baseline
+  • Devices: 62.1% improvement (Batch Memory Managed)
+    Throughput: 947.6 obj/sec vs 358.76 obj/sec baseline
+
+=== Production-Ready Commands ===
+Based on your test results, here are the optimal configurations:
+
+# Users - 122360ms (272.02 obj/sec):
+$results = Invoke-mgBatchRequest -Endpoint 'users' -UseParallelProcessing -MaxConcurrentJobs 10
+
+# Devices - 93581ms (947.6 obj/sec):
+$results = Invoke-mgBatchRequest -Endpoint 'devices' -MemoryThreshold 100
+```
+
 ### 📋 **Contributing Guidelines**
 
 1. 🍴 **Fork** the repository
@@ -314,7 +359,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📚 **Documentation:** Check the [blog post](BlogPost-InvokeMgBatchRequest.txt) for detailed explanations
+- 📚 **Documentation:** Check the [blog post](BlogPost-InvokeMgBatchRequest.md) for detailed explanations
 - 🐛 **Issues:** Open an issue on GitHub for bug reports
 - 💡 **Feature Requests:** Share your ideas in the discussions
 - 📧 **Questions:** Tag in discussions for community help
