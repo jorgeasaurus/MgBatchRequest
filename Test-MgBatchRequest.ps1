@@ -332,7 +332,9 @@ $endpointConfigs = @{
         @{ Name = "Applications"; Endpoint = "applications"; Cmdlet = "Get-MgBetaApplication"; PageSize = -1; Category = "Identity" },
         @{ Name = "Mobile Apps"; Endpoint = "deviceAppManagement/mobileApps"; Cmdlet = "Get-MgBetaDeviceAppManagementMobileApp"; PageSize = -1; Category = "Device Management" },
         @{ Name = "Devices"; Endpoint = "devices"; Cmdlet = "Get-MgBetaDevice"; PageSize = -1; Category = "Identity" },
-        @{ Name = "Managed Devices"; Endpoint = "deviceManagement/managedDevices"; Cmdlet = "Get-MgBetaDeviceManagementManagedDevice"; PageSize = -1; Category = "Device Management" }
+        @{ Name = "Managed Devices"; Endpoint = "deviceManagement/managedDevices"; Cmdlet = "Get-MgBetaDeviceManagementManagedDevice"; PageSize = -1; Category = "Device Management" },
+        @{ Name = "Directory Audits"; Endpoint = "auditLogs/directoryAudits"; Cmdlet = "Get-MgBetaAuditLogDirectoryAudit"; PageSize = -1; Category = "Audit Logs" },
+        @{ Name = "Sign-in Logs"; Endpoint = "auditLogs/signIns"; Cmdlet = "Get-MgBetaAuditLogSignIn"; PageSize = -1; Category = "Audit Logs" }
     )
     "Extensive" = @(
         @{ Name = "All Users"; Endpoint = "users"; Cmdlet = "Get-MgBetaUser"; PageSize = -1; Category = "Identity" },

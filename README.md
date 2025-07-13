@@ -32,12 +32,12 @@ Based on actual test results from a real tenant with production data:
 
 | Endpoint            | Objects   | Standard Cmdlet | Best Batch Method      | Time Saved    | Speed Boost   |
 | ------------------- | --------- | --------------- | ---------------------- | ------------- | ------------- |
-| **Users**           | 33,284    | 204,519ms       | 122,360ms (Sequential) | **⚡ 40.2%**  | 🚀 1.7x speed |
-| **Groups**          | 18,585    | 43,696ms        | 18,119ms (Memory)      | **⚡ 58.5%**  | 🚀 2.4x speed |
+| **Users**           | 43,284    | 204,519ms       | 122,360ms (Sequential) | **⚡ 40.2%**  | 🚀 1.7x speed |
+| **Groups**          | 13,585    | 43,696ms        | 18,119ms (Memory)      | **⚡ 58.5%**  | 🚀 2.4x speed |
 | **Applications**    | 347       | 1,367ms         | 757ms (5 jobs)         | **⚡ 44.6%**  | 🚀 1.8x speed |
-| **Mobile Apps**     | 454       | 894ms           | 589ms (12 jobs)        | **⚡ 34.1%**  | 🚀 1.5x speed |
-| **Devices**         | 88,677    | 247,174ms       | 93,581ms (Memory)      | **⚡ 62.1%**  | 🚀 2.6x speed |
-| **Managed Devices** | 9,866     | 14,192ms        | 12,869ms (Sequential)  | **⚡ 9.3%**   | 🚀 1.1x speed |
+| **Mobile Apps**     | 589       | 894ms           | 589ms (12 jobs)        | **⚡ 34.1%**  | 🚀 1.5x speed |
+| **Devices**         | 58,677    | 247,174ms       | 93,581ms (Memory)      | **⚡ 62.1%**  | 🚀 2.6x speed |
+| **Managed Devices** | 13,866    | 14,192ms        | 12,869ms (Sequential)  | **⚡ 9.3%**   | 🚀 1.1x speed |
 
 ## ✨ Key Features
 
@@ -57,7 +57,7 @@ Based on actual test results from a real tenant with production data:
 - **📊 Performance Monitoring:** Real-time throughput and memory usage tracking
 - **⚠️ Error Detection:** HTTP 400 error monitoring and reporting
 - **🔧 Auto-Optimization:** Intelligent parameter tuning for optimal performance
-- **🏗️ Modular Architecture:** Refactored with 6 helper functions for easy maintenance
+- **🏗️ Streamlined Architecture:** Consolidated single-function design for reliability and performance
 
 ## 🚀 Quick Start
 
@@ -173,23 +173,23 @@ $massiveDataset = Invoke-mgBatchRequest -Endpoint "auditLogs/directoryAudits" `
 
 ```
 📂 MgBatchRequest/
-├── 🚀 Invoke-mgBatchRequest.ps1      # Main function with modular architecture
+├── 🚀 Invoke-mgBatchRequest.ps1      # Main function with streamlined architecture
 ├── 🧪 Test-MgBatchRequest.ps1        # Comprehensive testing framework
 └── 📖 README.md                      # This file
 ```
 
 ### 🏗️ **Function Architecture**
 
-The main script is now modularly organized with these helper functions:
+The main script uses a streamlined, single-function design that integrates:
 
-| Function                        | Purpose                                                                     |
-| ------------------------------- | --------------------------------------------------------------------------- |
-| `Get-GraphApiBaseUri`           | Determines the appropriate Graph API base URI for the connected environment |
-| `Get-SkipTokens`                | Extracts skip tokens from Graph API responses for pagination                |
-| `New-BatchRequest`              | Creates properly formatted batch request objects                            |
-| `Test-MemoryThreshold`          | Monitors memory usage and provides threshold warnings                       |
-| `Invoke-BatchRequestSequential` | Handles sequential batch processing                                         |
-| `Invoke-BatchRequestParallel`   | Manages parallel batch processing with thread jobs                          |
+| Component                      | Purpose                                                                     |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| **Multi-Cloud Detection**     | Automatically determines Graph API base URI for connected environment      |
+| **NextLink URL Handling**     | Preserves complete `@odata.nextLink` URLs for reliable pagination          |
+| **Batch Request Builder**     | Creates properly formatted batch request objects inline                     |
+| **Memory Monitoring**         | Built-in memory usage tracking with configurable thresholds                |
+| **Sequential Processing**     | Handles sequential batch processing for optimal medium dataset performance  |
+| **Parallel Processing**       | Manages parallel batch processing with configurable thread jobs            |
 
 ## 🎯 Parameters Reference
 
@@ -221,12 +221,12 @@ Based on comprehensive testing in a real tenant (Test Date: 2025-01-12):
 
 | Endpoint            | Object Count | Standard Cmdlet | Best Batch Method      | Time Saved | Throughput         |
 | ------------------- | ------------ | --------------- | ---------------------- | ---------- | ------------------ |
-| **Users**           | 33,284       | 3m 24s          | 2m 2s (Sequential)     | **40%** ⚡ | 162 → 272 obj/sec  |
-| **Groups**          | 18,585       | 43.7s           | 18.1s (Memory)         | **59%** 🚀 | 425 → 976 obj/sec  |
-| **Devices**         | 88,677       | 4m 7s           | 1m 34s (Memory)        | **62%** 🎯 | 359 → 948 obj/sec  |
+| **Users**           | 43,284       | 3m 24s          | 2m 2s (Sequential)     | **40%** ⚡ | 162 → 272 obj/sec  |
+| **Groups**          | 13,585       | 43.7s           | 18.1s (Memory)         | **59%** 🚀 | 425 → 976 obj/sec  |
+| **Devices**         | 58,677       | 4m 7s           | 1m 34s (Memory)        | **62%** 🎯 | 359 → 948 obj/sec  |
 | **Applications**    | 347          | 1.4s            | 0.8s (Parallel-5)      | **45%** 🔥 | 254 → 458 obj/sec  |
 
-**Key Finding**: For large datasets (33K+ objects), sequential batching often outperforms parallel processing due to reduced overhead.
+**Key Finding**: For large datasets (43K+ objects), sequential batching often outperforms parallel processing due to reduced overhead.
 
 ### 💾 **Memory Efficiency**
 
@@ -305,17 +305,17 @@ Enhanced with Advanced Memory Profiling, Error Detection & Optimization
 Test Mode: Standard | Max Jobs: 15 | Iterations: 1
 
 --- Optimizing: Users ---
-  Testing: Standard Cmdlet ✓ 204519ms (33284 objects)
-  Testing: Batch Sequential ✓ 122360ms (33284 objects)
-  Testing: Batch Parallel (5 jobs) ✓ 141907ms (33284 objects)
-  Testing: Batch Parallel (8 jobs) ✓ 131957ms (33284 objects)
-  Testing: Batch Parallel (10 jobs) ✓ 122451ms (33284 objects)
-  Testing: Batch Memory Managed ✓ 128749ms (33284 objects)
+  Testing: Standard Cmdlet ✓ 204519ms (43284 objects)
+  Testing: Batch Sequential ✓ 122360ms (43284 objects)
+  Testing: Batch Parallel (5 jobs) ✓ 141907ms (43284 objects)
+  Testing: Batch Parallel (8 jobs) ✓ 131957ms (43284 objects)
+  Testing: Batch Parallel (10 jobs) ✓ 122451ms (43284 objects)
+  Testing: Batch Memory Managed ✓ 128749ms (43284 objects)
 
 --- Optimizing: Devices ---
-  Testing: Standard Cmdlet ✓ 247174ms (88677 objects)
-  Testing: Batch Sequential ⚠ 106596ms (88677 objects, Memory warning)
-  Testing: Batch Parallel (8 jobs) ✓ 97094ms (88677 objects)
+  Testing: Standard Cmdlet ✓ 247174ms (58677 objects)
+  Testing: Batch Sequential ⚠ 106596ms (58677 objects, Memory warning)
+  Testing: Batch Parallel (8 jobs) ✓ 97094ms (58677 objects)
   Testing: Batch Memory Managed ✓ 93581ms (88677 objects)
 
 === Advanced Performance Analysis ===
