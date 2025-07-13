@@ -334,15 +334,28 @@ $endpointConfigs = @{
         @{ Name = "Devices"; Endpoint = "devices"; Cmdlet = "Get-MgBetaDevice"; PageSize = -1; Category = "Identity" },
         @{ Name = "Managed Devices"; Endpoint = "deviceManagement/managedDevices"; Cmdlet = "Get-MgBetaDeviceManagementManagedDevice"; PageSize = -1; Category = "Device Management" },
         @{ Name = "Directory Audits"; Endpoint = "auditLogs/directoryAudits"; Cmdlet = "Get-MgBetaAuditLogDirectoryAudit"; PageSize = -1; Category = "Audit Logs" },
-        @{ Name = "Sign-in Logs"; Endpoint = "auditLogs/signIns"; Cmdlet = "Get-MgBetaAuditLogSignIn"; PageSize = -1; Category = "Audit Logs" }
+        @{ Name = "Sign-in Logs"; Endpoint = "auditLogs/signIns"; Cmdlet = "Get-MgBetaAuditLogSignIn"; PageSize = -1; Category = "Audit Logs" },
+        @{ Name = "Service Principals"; Endpoint = "servicePrincipals"; Cmdlet = "Get-MgBetaServicePrincipal"; PageSize = -1; Category = "Identity" },
+        @{ Name = "Conditional Access Policies"; Endpoint = "identity/conditionalAccess/policies"; Cmdlet = "Get-MgBetaIdentityConditionalAccessPolicy"; PageSize = -1; Category = "Security" },
+        @{ Name = "App Registrations"; Endpoint = "applications"; Cmdlet = "Get-MgBetaApplication"; PageSize = -1; Category = "Identity" },
+        @{ Name = "Directory Roles"; Endpoint = "directoryRoles"; Cmdlet = "Get-MgBetaDirectoryRole"; PageSize = -1; Category = "Identity" },
+        @{ Name = "Organization"; Endpoint = "organization"; Cmdlet = "Get-MgBetaOrganization"; PageSize = -1; Category = "Identity" },
+        @{ Name = "Domains"; Endpoint = "domains"; Cmdlet = "Get-MgBetaDomain"; PageSize = -1; Category = "Identity" }
     )
     "Extensive" = @(
         @{ Name = "All Users"; Endpoint = "users"; Cmdlet = "Get-MgBetaUser"; PageSize = -1; Category = "Identity" },
         @{ Name = "All Groups"; Endpoint = "groups"; Cmdlet = "Get-MgBetaGroup"; PageSize = -1; Category = "Identity" },
         @{ Name = "All Applications"; Endpoint = "applications"; Cmdlet = "Get-MgBetaApplication"; PageSize = -1; Category = "Identity" },
         @{ Name = "All Managed Devices"; Endpoint = "deviceManagement/managedDevices"; Cmdlet = "Get-MgBetaDeviceManagementManagedDevice"; PageSize = -1; Category = "Device Management" },
+        @{ Name = "All Mobile Apps"; Endpoint = "deviceAppManagement/mobileApps"; Cmdlet = "Get-MgBetaDeviceAppManagementMobileApp"; PageSize = -1; Category = "Device Management" },
+        @{ Name = "All Service Principals"; Endpoint = "servicePrincipals"; Cmdlet = "Get-MgBetaServicePrincipal"; PageSize = -1; Category = "Identity" },
+        @{ Name = "All Devices"; Endpoint = "devices"; Cmdlet = "Get-MgBetaDevice"; PageSize = -1; Category = "Identity" },
         @{ Name = "Directory Audits"; Endpoint = "auditLogs/directoryAudits"; Cmdlet = "Get-MgBetaAuditLogDirectoryAudit"; PageSize = -1; Category = "Audit Logs" },
-        @{ Name = "Sign-in Logs"; Endpoint = "auditLogs/signIns"; Cmdlet = "Get-MgBetaAuditLogSignIn"; PageSize = -1; Category = "Audit Logs" }
+        @{ Name = "Sign-in Logs"; Endpoint = "auditLogs/signIns"; Cmdlet = "Get-MgBetaAuditLogSignIn"; PageSize = -1; Category = "Audit Logs" },
+        @{ Name = "Conditional Access Policies"; Endpoint = "identity/conditionalAccess/policies"; Cmdlet = "Get-MgBetaIdentityConditionalAccessPolicy"; PageSize = -1; Category = "Security" },
+        @{ Name = "Directory Roles"; Endpoint = "directoryRoles"; Cmdlet = "Get-MgBetaDirectoryRole"; PageSize = -1; Category = "Identity" },
+        @{ Name = "Organization Details"; Endpoint = "organization"; Cmdlet = "Get-MgBetaOrganization"; PageSize = -1; Category = "Identity" },
+        @{ Name = "Domain Configuration"; Endpoint = "domains"; Cmdlet = "Get-MgBetaDomain"; PageSize = -1; Category = "Identity" }
     )
     "Optimize"  = @(
         # Will be populated based on Endpoints parameter
@@ -377,6 +390,11 @@ $endpointsToTest = switch ($TestMode) {
                 "deviceAppManagement/mobileApps" { "Get-MgBetaDeviceAppManagementMobileApp" }
                 "auditLogs/directoryAudits" { "Get-MgBetaAuditLogDirectoryAudit" }
                 "auditLogs/signIns" { "Get-MgBetaAuditLogSignIn" }
+                "servicePrincipals" { "Get-MgBetaServicePrincipal" }
+                "identity/conditionalAccess/policies" { "Get-MgBetaIdentityConditionalAccessPolicy" }
+                "directoryRoles" { "Get-MgBetaDirectoryRole" }
+                "organization" { "Get-MgBetaOrganization" }
+                "domains" { "Get-MgBetaDomain" }
                 default { "Unknown" }
             }
             @{ Name = $_; Endpoint = $_; Cmdlet = $cmdlet; PageSize = -1; Category = "Custom" }
