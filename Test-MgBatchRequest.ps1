@@ -267,13 +267,27 @@ function Test-EndpointOptimization {
     
     Write-Host "`n--- Optimizing: $($Config.Name) ---" -ForegroundColor Magenta
     
+    # Add note for audit log endpoints about date filtering
+    if ($Config.Endpoint -like "auditLogs/*") {
+        $filterDate = (Get-Date).AddDays(-7).ToString("yyyy-MM-dd")
+        Write-Host "  Note: Testing with data from last 7 days ($filterDate onwards) to prevent timeouts" -ForegroundColor Yellow
+    }
+    
     $endpointResults = @()
     $pageSize = if ($Config.PageSize -eq -1) { 999 } else { $Config.PageSize }
     
     # Test baseline if not skipped and cmdlet is known
     if ($IncludeBaseline -and $Config.Cmdlet -ne "Unknown") {
-        # Always use -All for standard cmdlets to get complete comparison
-        $baselineScript = [scriptblock]::Create("$($Config.Cmdlet) -All")
+        # Apply reasonable limits for audit log endpoints to prevent timeouts
+        $baselineScript = if ($Config.Endpoint -like "auditLogs/*") {
+            # Limit audit logs to last 7 days for performance testing
+            $filterDate = (Get-Date).AddDays(-7).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            $dateProperty = if ($Config.Endpoint -eq "auditLogs/directoryAudits") { "activityDateTime" } else { "createdDateTime" }
+            [scriptblock]::Create("$($Config.Cmdlet) -Filter `"$dateProperty ge $filterDate`" -All")
+        } else {
+            # Use -All for other endpoints
+            [scriptblock]::Create("$($Config.Cmdlet) -All")
+        }
         
         $result = Test-WithMemoryProfiler -TestName $Config.Name -TestScript $baselineScript -Method "Standard Cmdlet" -Category $Config.Category -ExpectedPageSize $pageSize -IterationCount $IterationCount
         $endpointResults += $result
@@ -283,9 +297,22 @@ function Test-EndpointOptimization {
     
     # Test sequential batch
     $batchScript = if ($Config.PageSize -eq -1) {
-        [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)'")
+        if ($Config.Endpoint -like "auditLogs/*") {
+            # Apply same date filter for audit logs in batch requests
+            $filterDate = (Get-Date).AddDays(-7).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            $dateProperty = if ($Config.Endpoint -eq "auditLogs/directoryAudits") { "activityDateTime" } else { "createdDateTime" }
+            [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -Filter `"$dateProperty ge $filterDate`"")
+        } else {
+            [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)'")
+        }
     } else {
-        [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -PageSize $pageSize")
+        if ($Config.Endpoint -like "auditLogs/*") {
+            $filterDate = (Get-Date).AddDays(-7).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            $dateProperty = if ($Config.Endpoint -eq "auditLogs/directoryAudits") { "activityDateTime" } else { "createdDateTime" }
+            [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -PageSize $pageSize -Filter `"$dateProperty ge $filterDate`"")
+        } else {
+            [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -PageSize $pageSize")
+        }
     }
     
     $result = Test-WithMemoryProfiler -TestName $Config.Name -TestScript $batchScript -Method "Batch Sequential" -Category $Config.Category -ExpectedPageSize $pageSize -IterationCount $IterationCount
@@ -297,9 +324,21 @@ function Test-EndpointOptimization {
     foreach ($jobs in $jobCounts) {
         if ($jobs -le $MaxJobs) {
             $parallelScript = if ($Config.PageSize -eq -1) {
-                [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -UseParallelProcessing -MaxConcurrentJobs $jobs")
+                if ($Config.Endpoint -like "auditLogs/*") {
+                    $filterDate = (Get-Date).AddDays(-7).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                    $dateProperty = if ($Config.Endpoint -eq "auditLogs/directoryAudits") { "activityDateTime" } else { "createdDateTime" }
+                    [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -UseParallelProcessing -MaxConcurrentJobs $jobs -Filter `"$dateProperty ge $filterDate`"")
+                } else {
+                    [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -UseParallelProcessing -MaxConcurrentJobs $jobs")
+                }
             } else {
-                [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -UseParallelProcessing -MaxConcurrentJobs $jobs -PageSize $pageSize")
+                if ($Config.Endpoint -like "auditLogs/*") {
+                    $filterDate = (Get-Date).AddDays(-7).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                    $dateProperty = if ($Config.Endpoint -eq "auditLogs/directoryAudits") { "activityDateTime" } else { "createdDateTime" }
+                    [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -UseParallelProcessing -MaxConcurrentJobs $jobs -PageSize $pageSize -Filter `"$dateProperty ge $filterDate`"")
+                } else {
+                    [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -UseParallelProcessing -MaxConcurrentJobs $jobs -PageSize $pageSize")
+                }
             }
             
             $result = Test-WithMemoryProfiler -TestName $Config.Name -TestScript $parallelScript -Method "Batch Parallel ($jobs jobs)" -Category $Config.Category -ExpectedPageSize $pageSize -IterationCount $IterationCount -CaptureWarnings
@@ -309,9 +348,21 @@ function Test-EndpointOptimization {
     
     # Test memory managed batch
     $memoryScript = if ($Config.PageSize -eq -1) {
-        [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -MemoryThreshold 100")
+        if ($Config.Endpoint -like "auditLogs/*") {
+            $filterDate = (Get-Date).AddDays(-7).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            $dateProperty = if ($Config.Endpoint -eq "auditLogs/directoryAudits") { "activityDateTime" } else { "createdDateTime" }
+            [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -MemoryThreshold 100 -Filter `"$dateProperty ge $filterDate`"")
+        } else {
+            [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -MemoryThreshold 100")
+        }
     } else {
-        [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -MemoryThreshold 100 -PageSize $pageSize")
+        if ($Config.Endpoint -like "auditLogs/*") {
+            $filterDate = (Get-Date).AddDays(-7).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            $dateProperty = if ($Config.Endpoint -eq "auditLogs/directoryAudits") { "activityDateTime" } else { "createdDateTime" }
+            [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -MemoryThreshold 100 -PageSize $pageSize -Filter `"$dateProperty ge $filterDate`"")
+        } else {
+            [scriptblock]::Create("Invoke-mgBatchRequest -Endpoint '$($Config.Endpoint)' -MemoryThreshold 100 -PageSize $pageSize")
+        }
     }
     
     $result = Test-WithMemoryProfiler -TestName $Config.Name -TestScript $memoryScript -Method "Batch Memory Managed" -Category $Config.Category -ExpectedPageSize $pageSize -IterationCount $IterationCount
@@ -336,7 +387,7 @@ $endpointConfigs = @{
         @{ Name = "Directory Audits"; Endpoint = "auditLogs/directoryAudits"; Cmdlet = "Get-MgBetaAuditLogDirectoryAudit"; PageSize = -1; Category = "Audit Logs" },
         @{ Name = "Sign-in Logs"; Endpoint = "auditLogs/signIns"; Cmdlet = "Get-MgBetaAuditLogSignIn"; PageSize = -1; Category = "Audit Logs" },
         @{ Name = "Service Principals"; Endpoint = "servicePrincipals"; Cmdlet = "Get-MgBetaServicePrincipal"; PageSize = -1; Category = "Identity" },
-        @{ Name = "Conditional Access Policies"; Endpoint = "identity/conditionalAccess/policies"; Cmdlet = "Get-MgBetaIdentityConditionalAccessPolicy"; PageSize = -1; Category = "Security" },
+        @{ Name = "Conditional Access Policies"; Endpoint = "identity/conditionalAccess/policies"; Cmdlet = "Invoke-MgGraphRequest -Uri `"beta/identity/conditionalAccess/policies`""; PageSize = -1; Category = "Security" },
         @{ Name = "App Registrations"; Endpoint = "applications"; Cmdlet = "Get-MgBetaApplication"; PageSize = -1; Category = "Identity" },
         @{ Name = "Directory Roles"; Endpoint = "directoryRoles"; Cmdlet = "Get-MgBetaDirectoryRole"; PageSize = -1; Category = "Identity" },
         @{ Name = "Organization"; Endpoint = "organization"; Cmdlet = "Get-MgBetaOrganization"; PageSize = -1; Category = "Identity" },
@@ -352,7 +403,7 @@ $endpointConfigs = @{
         @{ Name = "All Devices"; Endpoint = "devices"; Cmdlet = "Get-MgBetaDevice"; PageSize = -1; Category = "Identity" },
         @{ Name = "Directory Audits"; Endpoint = "auditLogs/directoryAudits"; Cmdlet = "Get-MgBetaAuditLogDirectoryAudit"; PageSize = -1; Category = "Audit Logs" },
         @{ Name = "Sign-in Logs"; Endpoint = "auditLogs/signIns"; Cmdlet = "Get-MgBetaAuditLogSignIn"; PageSize = -1; Category = "Audit Logs" },
-        @{ Name = "Conditional Access Policies"; Endpoint = "identity/conditionalAccess/policies"; Cmdlet = "Get-MgBetaIdentityConditionalAccessPolicy"; PageSize = -1; Category = "Security" },
+        @{ Name = "Conditional Access Policies"; Endpoint = "identity/conditionalAccess/policies"; Cmdlet = "Invoke-MgGraphRequest -Uri `"beta/identity/conditionalAccess/policies`""; PageSize = -1; Category = "Security" },
         @{ Name = "Directory Roles"; Endpoint = "directoryRoles"; Cmdlet = "Get-MgBetaDirectoryRole"; PageSize = -1; Category = "Identity" },
         @{ Name = "Organization Details"; Endpoint = "organization"; Cmdlet = "Get-MgBetaOrganization"; PageSize = -1; Category = "Identity" },
         @{ Name = "Domain Configuration"; Endpoint = "domains"; Cmdlet = "Get-MgBetaDomain"; PageSize = -1; Category = "Identity" }
@@ -391,7 +442,7 @@ $endpointsToTest = switch ($TestMode) {
                 "auditLogs/directoryAudits" { "Get-MgBetaAuditLogDirectoryAudit" }
                 "auditLogs/signIns" { "Get-MgBetaAuditLogSignIn" }
                 "servicePrincipals" { "Get-MgBetaServicePrincipal" }
-                "identity/conditionalAccess/policies" { "Get-MgBetaIdentityConditionalAccessPolicy" }
+                "identity/conditionalAccess/policies" { "Invoke-MgGraphRequest -Uri `"beta/identity/conditionalAccess/policies`"" }
                 "directoryRoles" { "Get-MgBetaDirectoryRole" }
                 "organization" { "Get-MgBetaOrganization" }
                 "domains" { "Get-MgBetaDomain" }
@@ -516,6 +567,7 @@ Group-Object TestName | ForEach-Object {
 
 if ($optimalConfigurations) {
     Write-Host "Based on your test results, here are the optimal configurations:" -ForegroundColor White
+    Write-Host "Note: Some endpoints may show batch test failures due to permissions, small datasets, or batch incompatibility." -ForegroundColor Yellow
     $optimalConfigurations | ForEach-Object {
         $endpointPath = switch -Wildcard ($_.Endpoint) {
             "*Managed Devices*" { "deviceManagement/managedDevices" }
@@ -525,12 +577,33 @@ if ($optimalConfigurations) {
             "*Users*" { "users" }
             "*Groups*" { "groups" }
             "*Applications*" { "applications" }
+            "*Service Principals*" { "servicePrincipals" }
+            "*Conditional Access*" { "identity/conditionalAccess/policies" }
+            "identity/conditionalAccess/policies" { "identity/conditionalAccess/policies" }
+            "*Directory Roles*" { "directoryRoles" }
+            "*Organization*" { "organization" }
+            "*Domain*" { "domains" }
+            "All Devices" { "devices" }
             "*Devices*" { "devices" }
-            default { $_.Endpoint }
+            default { 
+                Write-Warning "No endpoint mapping found for '$($_.Endpoint)', using default"
+                $_.Endpoint 
+            }
         }
         
         Write-Host "`n# $($_.Endpoint) - $($_.Performance) ($($_.Throughput)):" -ForegroundColor Green
-        Write-Host "`$results = Invoke-mgBatchRequest -Endpoint '$endpointPath' -UseParallelProcessing -MaxConcurrentJobs $($_.OptimalJobs)" -ForegroundColor White
+        
+        # Debug: Show what we're mapping
+        Write-Debug "Mapping endpoint: '$($_.Endpoint)' -> '$endpointPath'"
+        
+        # Add date filter for audit log endpoints since they were tested with filters
+        if ($endpointPath -like "auditLogs/*") {
+            $filterDate = (Get-Date).AddDays(-7).ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            $dateProperty = if ($endpointPath -eq "auditLogs/directoryAudits") { "activityDateTime" } else { "createdDateTime" }
+            Write-Host "`$results = Invoke-mgBatchRequest -Endpoint '$endpointPath' -UseParallelProcessing -MaxConcurrentJobs $($_.OptimalJobs) -Filter `"$dateProperty ge $filterDate`"" -ForegroundColor White
+        } else {
+            Write-Host "`$results = Invoke-mgBatchRequest -Endpoint '$endpointPath' -UseParallelProcessing -MaxConcurrentJobs $($_.OptimalJobs)" -ForegroundColor White
+        }
     }
 }
 

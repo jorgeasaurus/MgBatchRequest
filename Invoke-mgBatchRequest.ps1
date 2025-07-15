@@ -35,9 +35,9 @@ Higher values may improve performance but increase resource usage and API load.
 The threshold (in MB) at which to warn about potential memory impact. Default is 100MB.
 Set to 0 to disable memory warnings.
 
-.PARAMETER AsStream
-Output objects as they are retrieved instead of collecting all in memory first.
-Significantly reduces memory usage for large datasets and enables real-time processing.
+.PARAMETER ExpandProperty
+Optional OData expand expression to include related entities in the response.
+Example: "assignments" for mobile apps, "manager" for users
 
 .EXAMPLE
 Invoke-mgBatchRequest -Endpoint "users"
@@ -68,6 +68,10 @@ $signIns = Invoke-mgBatchRequest -Endpoint "auditLogs/signIns" -UseParallelProce
 $signIns | Export-Csv "signins.csv" -NoTypeInformation
 Retrieves all sign-in logs using 15 concurrent jobs for maximum performance, then exports to CSV.
 
+.EXAMPLE
+Invoke-mgBatchRequest -Endpoint "deviceAppManagement/mobileApps" -ExpandProperty "assignments"
+Retrieves all mobile apps with their assignments expanded.
+
 .NOTES
 Requires an active Microsoft Graph connection (Connect-MgGraph).
 Supports Global, USGov, USGovDoD, China, and Germany cloud environments.
@@ -93,7 +97,9 @@ function Invoke-mgBatchRequest {
         $MaxConcurrentJobs = 8,
         # Memory threshold in MB for warnings (default: 100MB, set to 0 to disable)
         [int]
-        $MemoryThreshold = 100
+        $MemoryThreshold = 100,
+        [string]
+        $ExpandProperty
     )
 
     # Debug: Function entry
@@ -102,6 +108,7 @@ function Invoke-mgBatchRequest {
     Write-Debug "  Endpoint: '$Endpoint'"
     Write-Debug "  PageSize: $PageSize"
     Write-Debug "  Filter: '$Filter'"
+    Write-Debug "  ExpandProperty: '$ExpandProperty'"
     Write-Debug "  UseParallelProcessing: $UseParallelProcessing"
     Write-Debug "  MaxConcurrentJobs: $MaxConcurrentJobs"
     Write-Debug "  MemoryThreshold: $MemoryThreshold"
@@ -161,6 +168,19 @@ function Invoke-mgBatchRequest {
         $encodedFilter = [uri]::EscapeDataString($Filter)
         $firstUri += "&`$filter=$encodedFilter"
         Write-Debug "Applied filter: $encodedFilter"
+    } else {
+        Write-Debug "No filter provided"
+    }
+    Write-Debug "Final first URI: $firstUri"
+
+    # Apply expand if provided
+    if ($ExpandProperty) {
+        Write-Verbose "Applying expand: '$ExpandProperty'..."
+        Write-Debug "URL-encoding expand..."
+        # URL-encode the filter to handle special characters
+        $encodedExpand = [uri]::EscapeDataString($ExpandProperty)
+        $firstUri += "&`$expand=$encodedExpand"
+        Write-Debug "Applied expand: $encodedExpand"
     } else {
         Write-Debug "No filter provided"
     }
@@ -400,43 +420,3 @@ function Invoke-mgBatchRequest {
     Write-Debug "=== Invoke-mgBatchRequest DEBUG END ==="
     return $allGraphObjects
 }
-<#
-
-applicationTemplates
-(Measure-Command { Invoke-mgBatchRequest -Endpoint "/applicationTemplates" }).TotalMilliseconds  
-(Measure-Command { Invoke-mgBatchRequest -Endpoint "/admin/windows/updates/catalog/entries" }).TotalMilliseconds
-Performance comparison examples - uncomment to test execution times:
-Write-Host "Performance comparison examples (uncomment to test execution times):"
-
-Write-Host "Get-MgBetaDeviceManagementDetectedApp"
-(Measure-Command { Get-MgBetaDeviceManagementDetectedApp }).TotalMilliseconds
-Write-Host "Invoke-mgBatchRequest -Endpoint 'deviceManagement/detectedApps'"
-(Measure-Command { Invoke-mgBatchRequest -Endpoint "/deviceManagement/detectedApps" }).TotalMilliseconds    
-Write-Host "Invoke-mgBatchRequest -Endpoint 'deviceManagement/detectedApps' -UseParallelProcessing -MaxConcurrentJobs 15"
-(Measure-Command { Invoke-mgBatchRequest -Endpoint "/deviceManagement/detectedApps" -UseParallelProcessing -MaxConcurrentJobs 15 }).TotalMilliseconds
-
-Write-Host "Get-MgBetaDeviceManagementManagedDevice"
-(Measure-Command { Get-MgBetaDeviceManagementManagedDevice }).TotalMilliseconds
-Write-Host "Invoke-mgBatchRequest -Endpoint 'deviceManagement/managedDevices'"
-(Measure-Command { Invoke-mgBatchRequest -Endpoint "/deviceManagement/managedDevices" }).TotalMilliseconds
-
-Write-Host "Get-MgBetaAuditLogDirectoryAudit -All"
-(Measure-Command { Get-MgBetaAuditLogDirectoryAudit -All }).TotalMilliseconds
-Write-Host "Invoke-mgBatchRequest -Endpoint 'auditLogs/directoryAudits'"
-(Measure-Command { Invoke-mgBatchRequest -Endpoint "/auditLogs/directoryAudits" }).TotalMilliseconds
-Write-Host "Invoke-mgBatchRequest -Endpoint 'auditLogs/directoryAudits' -UseParallelProcessing"
-(Measure-Command { Invoke-mgBatchRequest -Endpoint "/auditLogs/directoryAudits" -UseParallelProcessing -MaxConcurrentJobs 15 }).TotalMilliseconds
-
-
-Write-Host "Get-MgBetaAuditLogSignIn -All"
-(Measure-Command { Get-MgBetaAuditLogSignIn -All }).TotalMilliseconds
-Write-Host "Invoke-mgBatchRequest -Endpoint 'auditLogs/signIns'"
-(Measure-Command { Invoke-mgBatchRequest -Endpoint "/auditLogs/signIns" }).TotalMilliseconds
-Write-Host "Invoke-mgBatchRequest -Endpoint 'auditLogs/signIns' -UseParallelProcessing"
-(Measure-Command { Invoke-mgBatchRequest -Endpoint "/auditLogs/signIns" -UseParallelProcessing }).TotalMilliseconds
-Write-Host "Invoke-mgBatchRequest -Endpoint 'auditLogs/signIns' -UseParallelProcessing -MaxConcurrentJobs 15"
-  Measure-Command {
-      Invoke-mgBatchRequest -Endpoint 'auditLogs/signIns' -UseParallelProcessing -MaxConcurrentJobs 15
-  }
-
-#>
