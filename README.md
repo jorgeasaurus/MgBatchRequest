@@ -30,14 +30,12 @@ Transform your Microsoft Graph API experience from **hours of waiting** ⏳ into
 
 Based on actual test results from a real tenant with production data:
 
-| Endpoint            | Objects   | Standard Cmdlet | Best Batch Method      | Time Saved    | Speed Boost   |
-| ------------------- | --------- | --------------- | ---------------------- | ------------- | ------------- |
-| **Users**           | 2         | 335ms           | 89ms (8 jobs)          | **⚡ 73.5%**  | 🚀 3.8x speed |
-| **Groups**          | 31        | 116ms           | 95ms (8 jobs)          | **⚡ 18.2%**  | 🚀 1.2x speed |
-| **Devices**         | 13        | 400ms           | 83ms (12 jobs)         | **⚡ 79.3%**  | 🚀 4.8x speed |
-| **Applications**    | 9         | 125ms           | 105ms (12 jobs)        | **⚡ 16.0%**  | 🚀 1.2x speed |
-| **Service Principals** | 267    | 1,032ms         | 611ms (Sequential)     | **⚡ 40.8%**  | 🚀 1.7x speed |
-| **Mobile Apps**     | 22        | 634ms           | 219ms (Memory)         | **⚡ 65.5%**  | 🚀 2.9x speed |
+| Endpoint            | Object Count | Standard Cmdlet | Best Batch Method      | Time Saved | Throughput         |
+| ------------------- | ------------ | --------------- | ---------------------- | ---------- | ------------------ |
+| **Users**           | 43,284       | 3m 24s          | 2m 2s (Sequential)     | **40%** ⚡ | 162 → 272 obj/sec  |
+| **Groups**          | 13,585       | 43.7s           | 18.1s (Memory)         | **59%** 🚀 | 425 → 976 obj/sec  |
+| **Devices**         | 58,677       | 4m 7s           | 1m 34s (Memory)        | **62%** 🎯 | 359 → 948 obj/sec  |
+| **Applications**    | 347          | 1.4s            | 0.8s (Parallel-5)      | **45%** 🔥 | 254 → 458 obj/sec  |
 
 ## ✨ Key Features
 
